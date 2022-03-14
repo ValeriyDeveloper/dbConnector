@@ -1,3 +1,5 @@
+using Microsoft.EntityFrameworkCore;
+using src.Data;
 using src.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -8,12 +10,21 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddGrpc();
 
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("PSqlConnection")));
+
+builder.Services.AddScoped<AutoMigrator>();
+
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-app.MapGrpcService<GreeterService>();
-app.MapGet("/",
-    () =>
-        "Communication with gRPC endpoints must be made through a gRPC client. To learn how to create a client, visit: https://go.microsoft.com/fwlink/?linkid=2086909");
+var scopeService = app.Services.CreateScope();
+await (scopeService.ServiceProvider.GetRequiredService<AutoMigrator>()).Run();
+
+app.UseRouting();
+
+app.UseEndpoints(endpoints =>
+{
+    endpoints.MapGrpcService<GreeterService>();
+});
 
 app.Run();
