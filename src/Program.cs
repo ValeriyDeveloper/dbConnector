@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using src.Data;
+using src.Interfaces;
+using src.Repositories;
 using src.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -14,6 +16,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("PSqlConnection")));
 
 builder.Services.AddScoped<AutoMigrator>();
+builder.Services.AddScoped(typeof(IRepositoryAsync<>), typeof(RepositoryAsync<>));
 
 var app = builder.Build();
 
